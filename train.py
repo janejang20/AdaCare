@@ -33,7 +33,7 @@ from model import AdaCare
 def parse_arguments(parser):
     parser.add_argument('--test_mode', type=int, default=0, help='Test SA-CRNN on MIMIC-III dataset')
     parser.add_argument('--data_path', type=str, metavar='<data_path>', help='The path to the MIMIC-III data directory')
-    parser.add_argument('--file_name', type=str, metavar='<data_path>', help='File name to save model')
+    parser.add_argument('--file_name', type=str, metavar='<file_name>', help='File name to save model')
     parser.add_argument('--small_part', type=int, default=0, help='Use part of training data')
     parser.add_argument('--batch_size', type=int, default=128, help='Training batch size')
     parser.add_argument('--epochs', type=int, default=50, help='Training epochs')
@@ -85,7 +85,10 @@ if __name__ == '__main__':
         model = AdaCare(device=device).to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         
-        checkpoint = torch.load('./saved_weights/AdaCare')
+        if torch.cuda.is_available() == True:
+            checkpoint = torch.load('./saved_weights/'+args.file_name)
+        else:
+            checkpoint = torch.load('./saved_weights/'+args.file_name, map_location=torch.device('cpu'))
         save_chunk = checkpoint['chunk']
         print("last saved model is in chunk {}".format(save_chunk))
         model.load_state_dict(checkpoint['net'])
@@ -169,6 +172,7 @@ if __name__ == '__main__':
         max_auprc = 0
 
         file_name = './saved_weights/'+args.file_name
+        # file_name = './saved_weights/'+'second_run'
         for each_chunk in range(args.epochs):
             cur_batch_loss = []
             model.train()
